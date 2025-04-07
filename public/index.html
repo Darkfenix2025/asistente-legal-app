@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Legal - Cartas Documento y Análisis de Contratos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Asistente Legal</h1>
+            <p>Herramienta para redacción de Cartas Documento y Análisis de Contratos</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="cartas">Cartas Documento</button>
+            <button class="tab-btn" data-tab="contratos">Análisis de Contratos</button>
+        </div>
+
+        <div class="tab-content active" id="cartas-content">
+            <h2>Asistente para Cartas Documento</h2>
+            <p>Redacte o conteste cartas documento con asistencia de IA.</p>
+            
+            <form id="cartas-form" class="form">
+                <div class="form-group">
+                    <label for="carta-tipo">Tipo de operación:</label>
+                    <select id="carta-tipo" name="tipo" required>
+                        <option value="redactar">Redactar nueva carta documento</option>
+                        <option value="contestar">Contestar carta documento recibida</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Método de entrada:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="carta-metodo" value="texto" checked>
+                            Texto manual
+                        </label>
+                        <label>
+                            <input type="radio" name="carta-metodo" value="archivo">
+                            Subir archivo
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="carta-texto-container">
+                    <label for="carta-texto">Ingrese el texto:</label>
+                    <textarea id="carta-texto" name="texto" rows="10" placeholder="Ingrese aquí el texto completo de la carta documento o la información relevante para su redacción..."></textarea>
+                </div>
+
+                <div class="form-group hidden" id="carta-archivo-container">
+                    <label for="carta-archivo">Seleccione archivo:</label>
+                    <input type="file" id="carta-archivo" name="archivo" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+                    <div class="file-preview" id="carta-preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" id="carta-submit" class="btn btn-primary">Procesar Carta Documento</button>
+                </div>
+            </form>
+
+            <div class="result-container hidden" id="carta-result-container">
+                <h3>Resultado:</h3>
+                <div class="loading hidden" id="carta-loading">
+                    <div class="spinner"></div>
+                    <p>Procesando su solicitud...</p>
+                </div>
+                <textarea id="carta-result" rows="15" readonly></textarea>
+                <div class="download-options">
+                    <button id="carta-download-txt" class="btn">Descargar como TXT</button>
+                    <button id="carta-download-docx" class="btn">Descargar como DOCX</button>
+                    <button id="carta-download-pdf" class="btn">Descargar como PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="contratos-content">
+            <h2>Analizador de Contratos</h2>
+            <p>Analice contratos con asistencia de IA para identificar cláusulas importantes, riesgos y recomendaciones.</p>
+            
+            <form id="contratos-form" class="form">
+                <div class="form-group">
+                    <label>Método de entrada:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="contrato-metodo" value="texto" checked>
+                            Texto manual
+                        </label>
+                        <label>
+                            <input type="radio" name="contrato-metodo" value="archivo">
+                            Subir archivo
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="contrato-texto-container">
+                    <label for="contrato-texto">Ingrese el texto del contrato:</label>
+                    <textarea id="contrato-texto" name="texto" rows="10" placeholder="Ingrese aquí el texto completo del contrato a analizar..."></textarea>
+                </div>
+
+                <div class="form-group hidden" id="contrato-archivo-container">
+                    <label for="contrato-archivo">Seleccione archivo:</label>
+                    <input type="file" id="contrato-archivo" name="archivo" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+                    <div class="file-preview" id="contrato-preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" id="contrato-submit" class="btn btn-primary">Analizar Contrato</button>
+                </div>
+            </form>
+
+            <div class="result-container hidden" id="contrato-result-container">
+                <h3>Análisis del Contrato:</h3>
+                <div class="loading hidden" id="contrato-loading">
+                    <div class="spinner"></div>
+                    <p>Analizando contrato...</p>
+                </div>
+                <textarea id="contrato-result" rows="15" readonly></textarea>
+                <div class="download-options">
+                    <button id="contrato-download-txt" class="btn">Descargar como TXT</button>
+                    <button id="contrato-download-docx" class="btn">Descargar como DOCX</button>
+                    <button id="contrato-download-pdf" class="btn">Descargar como PDF</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Asistente Legal - Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script src="js/download.js"></script>
+    <script src="js/integration.js"></script>
+</body>
+</html>
