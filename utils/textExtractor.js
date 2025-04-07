@@ -106,6 +106,9 @@ async function extractTextFromPDFWithPoppler(filePath) {
  */
 async function extractTextFromPDFWithOCR(filePath) {
   try {
+    // Importar la configuración optimizada para documentos legales
+    const { processImagesInParallel, postProcessLegalText } = require('./tesseractOptimized');
+    
     // Crear directorio temporal para las imágenes
     const tempDir = path.join(path.dirname(filePath), 'temp_ocr');
     if (!fs.existsSync(tempDir)) {
@@ -116,7 +119,7 @@ async function extractTextFromPDFWithOCR(filePath) {
     const baseName = path.join(tempDir, path.basename(filePath, '.pdf'));
     
     // Convertir PDF a imágenes usando pdftoppm (parte de poppler-utils)
-    await execPromise(`pdftoppm -png "${filePath}" "${baseName}"`);
+    await execPromise(`pdftoppm -png -r 300 "${filePath}" "${baseName}"`);
     
     // Obtener lista de imágenes generadas
     const imageFiles = fs.readdirSync(tempDir)
@@ -128,29 +131,77 @@ async function extractTextFromPDFWithOCR(filePath) {
       throw new Error('No se pudieron generar imágenes a partir del PDF');
     }
     
-    // Extraer texto de cada imagen usando Tesseract
-    let fullText = '';
-    const worker = await createWorker('spa');
+    console.log(`Procesando ${imageFiles.length} páginas del PDF con OCR optimizado para documentos legales`);
     
+    // Usar procesamiento paralelo optimizado para documentos legales
+    const fullText = await processImagesInParallel(imageFiles);
+    
+    // Aplicar post-procesamiento específico para documentos legales
+    const processedText = postProcessLegalText(fullText);
+    
+    // Limpiar: eliminar las imágenes y el directorio temporal
     for (const imageFile of imageFiles) {
-      console.log(`Procesando OCR para imagen: ${imageFile}`);
-      const { data: { text } } = await worker.recognize(imageFile);
-      fullText += text + '\n\n';
-      
-      // Eliminar la imagen después de procesarla
-      fs.unlinkSync(imageFile);
+      if (fs.existsSync(imageFile)) {
+        fs.unlinkSync(imageFile);
+      }
     }
     
-    // Terminar el worker de Tesseract
-    await worker.terminate();
+    if (fs.existsSync(tempDir)) {
+      fs.rmdirSync(tempDir);
+    }
     
-    // Eliminar el directorio temporal
-    fs.rmdirSync(tempDir);
-    
-    return fullText;
+    return processedText;
   } catch (error) {
-    console.error('Error al extraer texto del PDF mediante OCR:', error);
-    throw error;
+    console.error('Error al extraer texto del PDF mediante OCR optimizado:', error);
+    
+    // Fallback al método original si el optimizado falla
+    try {
+      // Crear directorio temporal para las imágenes
+      const tempDir = path.join(path.dirname(filePath), 'temp_ocr');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      // Nombre base para las imágenes
+      const baseName = path.join(tempDir, path.basename(filePath, '.pdf'));
+      
+      // Convertir PDF a imágenes usando pdftoppm (parte de poppler-utils)
+      await execPromise(`pdftoppm -png "${filePath}" "${baseName}"`);
+      
+      // Obtener lista de imágenes generadas
+      const imageFiles = fs.readdirSync(tempDir)
+        .filter(file => file.startsWith(path.basename(filePath, '.pdf')) && file.endsWith('.png'))
+        .map(file => path.join(tempDir, file))
+        .sort(); // Ordenar para mantener el orden de las páginas
+      
+      if (imageFiles.length === 0) {
+        throw new Error('No se pudieron generar imágenes a partir del PDF');
+      }
+      
+      // Extraer texto de cada imagen usando Tesseract
+      let fullText = '';
+      const worker = await createWorker('spa');
+      
+      for (const imageFile of imageFiles) {
+        console.log(`Procesando OCR para imagen: ${imageFile}`);
+        const { data: { text } } = await worker.recognize(imageFile);
+        fullText += text + '\n\n';
+        
+        // Eliminar la imagen después de procesarla
+        fs.unlinkSync(imageFile);
+      }
+      
+      // Terminar el worker de Tesseract
+      await worker.terminate();
+      
+      // Eliminar el directorio temporal
+      fs.rmdirSync(tempDir);
+      
+      return fullText;
+    } catch (fallbackError) {
+      console.error('Error al extraer texto del PDF mediante OCR estándar:', fallbackError);
+      throw fallbackError;
+    }
   }
 }
 
@@ -184,21 +235,39 @@ async function extractTextFromTXT(filePath) {
 }
 
 /**
- * Extrae texto de una imagen usando OCR (Tesseract.js)
+ * Extrae texto de una imagen usando OCR (Tesseract.js) con configuración optimizada
  * @param {string} filePath - Ruta del archivo de imagen
  * @returns {Promise<string>} - Texto extraído de la imagen
  */
 async function extractTextFromImage(filePath) {
-  const worker = await createWorker('spa');
+  // Importar la configuración optimizada para documentos legales
+  const { extractTextFromImageOptimized, postProcessLegalText } = require('./tesseractOptimized');
   
   try {
-    const { data: { text } } = await worker.recognize(filePath);
-    await worker.terminate();
-    return text;
+    console.log(`Procesando imagen con OCR optimizado para documentos legales: ${filePath}`);
+    // Usar la función optimizada para documentos legales
+    const extractedText = await extractTextFromImageOptimized(filePath);
+    
+    // Aplicar post-procesamiento específico para documentos legales
+    const processedText = postProcessLegalText(extractedText);
+    
+    return processedText;
   } catch (error) {
-    console.error('Error al extraer texto de la imagen:', error);
-    await worker.terminate();
-    throw error;
+    console.error('Error al extraer texto de la imagen con OCR optimizado:', error);
+    
+    // Fallback al método original si el optimizado falla
+    console.log('Intentando con método de OCR estándar...');
+    const worker = await createWorker('spa');
+    
+    try {
+      const { data: { text } } = await worker.recognize(filePath);
+      await worker.terminate();
+      return text;
+    } catch (fallbackError) {
+      console.error('Error al extraer texto de la imagen con método estándar:', fallbackError);
+      await worker.terminate();
+      throw fallbackError;
+    }
   }
 }
 
